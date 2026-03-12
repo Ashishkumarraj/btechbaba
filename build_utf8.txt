@@ -1,0 +1,40 @@
+﻿node.exe : file:///C:/Users/A
+shishPc/OneDrive/Desktop/btec
+hbaba/node_modules/vite/dist/
+node/chunks/config.js:23919
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (file://  
+  /C:/User...config.js:239   
+ 19:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+										if (!resolved) 
+return Promise.reject(/* 
+@__PURE__ */ new 
+Error(`Failed to resolve 
+${url$3} from ${id}`));
+										                   
+                             
+     ^
+
+Error: Failed to resolve /bte
+chbaba/assets/index-DUW5Km2W.
+js from C:/Users/AshishPc/One
+Drive/Desktop/btechbaba/index
+.html
+    at file:///C:/Users/Ashis
+hPc/OneDrive/Desktop/btechbab
+a/node_modules/vite/dist/node
+/chunks/config.js:23919:64
+
+Node.js v24.12.0
