@@ -23,7 +23,7 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
+    <Router basename="/btechbaba/">
       <AppContent />
     </Router>
   );
