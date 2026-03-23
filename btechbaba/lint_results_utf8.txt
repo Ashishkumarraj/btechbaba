@@ -1,0 +1,15 @@
+﻿
+> btechbaba@0.0.0 lint
+> eslint .
+
+
+C:\Users\AshishPc\OneDrive\Desktop\btechbaba\src\components\YoutubeVideos.jsx
+  10:71  error  Unnecessary escape character: \&  no-useless-escape
+  10:89  error  Unnecessary escape character: \&  no-useless-escape
+  10:91  error  Unnecessary escape character: \?  no-useless-escape
+
+C:\Users\AshishPc\OneDrive\Desktop\btechbaba\src\pages\Signup.jsx
+  14:11  error  'navigate' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+Γ£û 4 problems (4 errors, 0 warnings)
+
