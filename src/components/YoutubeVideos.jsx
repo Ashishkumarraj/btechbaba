@@ -103,7 +103,7 @@ export default function TrendingVideos() {
         },
         {
             id: 6,
-            title: "Mastering Tailwind CSS in 50 Minutes",
+            title: "Permanently remove add from youtube",
             duration: "52:15",
             image: "https://images.unsplash.com/photo-1507721999472-8ed4421c4af2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
             link: "https://youtu.be/t7dYtWHJqq4?si=Qo_kG0UmtsTh6bRW"
@@ -120,7 +120,7 @@ export default function TrendingVideos() {
             title: "Introduction to Generative AI",
             duration: "40:05",
             image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-            link: "https://youtu.be/v2g2FERfe18?si=eEruOe3dh3tp_PQi"
+            link: "https://youtu.be/t7dYtWHJqq4?si=yuQOqF3_9l59j5ul"
         }
     ];
 
