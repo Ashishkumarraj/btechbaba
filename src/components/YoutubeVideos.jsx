@@ -117,10 +117,10 @@ export default function TrendingVideos() {
         },
         {
             id: 8,
-            title: "Introduction to Generative AI",
+            title: "Coming Soon",
             duration: "40:05",
             image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
-            link: "https://youtu.be/t7dYtWHJqq4?si=yuQOqF3_9l59j5ul"
+            link: ""
         }
     ];
 
