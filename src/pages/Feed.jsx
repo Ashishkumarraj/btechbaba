@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
     FiFileText, FiDownload, FiUsers, FiMessageSquare, 
     FiHash, FiHeart, FiSearch, FiPlus, FiSend, 
-    FiLoader, FiTrendingUp, FiBookmark, FiChevronDown, FiChevronUp, FiX, FiShield, FiLock, FiGlobe, FiHome
+    FiLoader, FiTrendingUp, FiBookmark, FiChevronDown, FiChevronUp, FiX, FiShield, FiLock, FiGlobe, FiHome, FiSkipForward, FiMail
 } from 'react-icons/fi';
 import { auth, db } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { collection, query, onSnapshot, orderBy, addDoc, serverTimestamp, where, getDocs } from 'firebase/firestore';
+import { 
+    collection, query, onSnapshot, orderBy, addDoc, serverTimestamp, 
+    where, getDocs, deleteDoc, doc, setDoc, limit, updateDoc,
+    arrayUnion, arrayRemove
+} from 'firebase/firestore';
 import { curriculumData } from '../data/curriculum';
 import { pdfUrls } from '../data/urls';
 import { createRipple } from '../utils/ripple';
@@ -95,8 +99,8 @@ const Feed = () => {
                 {/* Right Sidebar - Desktop Only */}
                 <aside className="hidden xl:block w-80 space-y-6 sticky top-24 self-start">
                     <div className="bg-gradient-to-br from-purple-600 to-indigo-700 p-6 rounded-3xl text-white shadow-xl">
-                        <h4 className="font-bold text-lg mb-2">BtechBaba Pro</h4>
-                        <p className="text-sm opacity-90 mb-4">Get unlimited access to all premium resources.</p>
+                        <h4 className="font-bold text-lg mb-2 text-white">BtechBaba Pro</h4>
+                        <p className="text-sm opacity-90 mb-4 text-white">Get unlimited access to all premium resources.</p>
                         <button className="w-full py-2 bg-white text-purple-600 rounded-xl font-bold text-sm hover:bg-opacity-90 transition-all active:scale-95">
                             Upgrade Now
                         </button>
@@ -104,7 +108,7 @@ const Feed = () => {
                 </aside>
             </div>
 
-            {/* Mobile Bottom Navigation - Standard App UX */}
+            {/* Mobile Bottom Navigation */}
             <div className="fixed bottom-0 left-0 right-0 lg:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-100 dark:border-gray-800 px-2 py-2 flex items-center justify-around z-50">
                 <BottomNavItem to="/feed/notes" icon={FiFileText} label="Notes" />
                 <BottomNavItem to="/feed/pyqs" icon={FiDownload} label="PYQs" />
@@ -116,7 +120,7 @@ const Feed = () => {
     );
 };
 
-// --- Responsive Sections ---
+// --- Sections ---
 
 export const NotesSection = ({ type }) => {
     const [openYear, setOpenYear] = useState(null);
@@ -303,20 +307,20 @@ export const CommunitiesSection = () => {
             {loading ? (
                 <div className="flex justify-center py-20"><FiLoader className="animate-spin text-purple-500" size={32} /></div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                     {communities.map((comm) => (
-                        <div key={comm.id} className="flex items-center p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-purple-500 transition-all cursor-pointer group active:scale-98">
-                            <div className="w-12 h-12 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl mr-4 shadow-inner group-hover:scale-105 transition-transform">
+                        <div key={comm.id} className="flex items-center p-4 sm:p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700 hover:border-purple-500 transition-all cursor-pointer group active:scale-98">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl mr-4 shadow-inner group-hover:scale-105 transition-transform flex-shrink-0">
                                 {comm.name[0]}
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                                 <div className="flex items-center space-x-2">
                                     <h4 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base truncate">{comm.name}</h4>
                                     {comm.type === 'personal' ? <FiLock className="text-gray-400" size={12} /> : <FiGlobe className="text-purple-400" size={12} />}
                                 </div>
-                                <p className="text-[10px] sm:text-xs text-gray-500">{comm.memberCount?.toLocaleString() || 0} members</p>
+                                <p className="text-[10px] sm:text-xs text-gray-500 truncate">{comm.memberCount?.toLocaleString() || 0} members</p>
                             </div>
-                            <button className="px-3 py-1.5 bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 text-[10px] sm:text-xs font-bold rounded-lg border border-purple-200 dark:border-purple-900/50 shadow-sm hover:bg-purple-600 hover:text-white transition-all">
+                            <button className="px-3 py-1.5 bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 text-[10px] sm:text-xs font-bold rounded-lg border border-purple-200 dark:border-purple-900/50 shadow-sm hover:bg-purple-600 hover:text-white transition-all ml-2">
                                 JOIN
                             </button>
                         </div>
@@ -324,7 +328,7 @@ export const CommunitiesSection = () => {
                 </div>
             )}
 
-            {/* Modal - Responsive for Touch */}
+            {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl animate-in slide-in-from-bottom duration-300">
@@ -335,56 +339,28 @@ export const CommunitiesSection = () => {
                                 <FiX size={24} />
                             </button>
                         </div>
-
-                        {error && (
-                            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold border border-red-100">
-                                {error}
-                            </div>
-                        )}
-
+                        {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-[10px] font-bold border border-red-100">{error}</div>}
                         <form onSubmit={handleCreate} className="space-y-6">
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Community Name</label>
-                                <input 
-                                    type="text" 
-                                    className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-none rounded-2xl focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white font-medium"
-                                    placeholder="e.g. CSE Study Group"
-                                    value={newComm.name}
-                                    onChange={(e) => setNewComm({...newComm, name: e.target.value})}
-                                    required
-                                />
+                                <input type="text" className="w-full px-4 py-4 bg-gray-50 dark:bg-gray-800 border-none rounded-2xl focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white font-medium" placeholder="e.g. CSE Study Group" value={newComm.name} onChange={(e) => setNewComm({...newComm, name: e.target.value})} required />
                             </div>
-
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Privacy Type</label>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <button 
-                                        type="button"
-                                        onClick={() => setNewComm({...newComm, type: 'public'})}
-                                        className={`flex flex-col items-center p-4 rounded-3xl border-2 transition-all ${newComm.type === 'public' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10 shadow-md' : 'border-gray-50 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50'}`}
-                                    >
+                                    <button type="button" onClick={() => setNewComm({...newComm, type: 'public'})} className={`flex flex-col items-center p-4 rounded-3xl border-2 transition-all ${newComm.type === 'public' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10 shadow-md' : 'border-gray-50 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50'}`}>
                                         <FiGlobe className={newComm.type === 'public' ? 'text-purple-600' : 'text-gray-400'} size={24} />
                                         <span className="mt-2 text-xs font-bold text-gray-900 dark:text-white">Public</span>
                                         <span className="text-[10px] text-gray-400 mt-1">Lakhs of members</span>
                                     </button>
-
-                                    <button 
-                                        type="button"
-                                        onClick={() => setNewComm({...newComm, type: 'personal'})}
-                                        className={`flex flex-col items-center p-4 rounded-3xl border-2 transition-all ${newComm.type === 'personal' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10 shadow-md' : 'border-gray-50 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50'}`}
-                                    >
+                                    <button type="button" onClick={() => setNewComm({...newComm, type: 'personal'})} className={`flex flex-col items-center p-4 rounded-3xl border-2 transition-all ${newComm.type === 'personal' ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/10 shadow-md' : 'border-gray-50 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50'}`}>
                                         <FiLock className={newComm.type === 'personal' ? 'text-purple-600' : 'text-gray-400'} size={24} />
                                         <span className="mt-2 text-xs font-bold text-gray-900 dark:text-white">Personal</span>
                                         <span className="text-[10px] text-gray-400 mt-1">Upto 1000 members</span>
                                     </button>
                                 </div>
                             </div>
-
-                            <button 
-                                type="submit" 
-                                disabled={createLoading}
-                                className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/30 flex items-center justify-center disabled:opacity-50 active:scale-95"
-                            >
+                            <button type="submit" disabled={createLoading} className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-bold transition-all shadow-xl shadow-purple-500/30 flex items-center justify-center disabled:opacity-50 active:scale-95">
                                 {createLoading ? <FiLoader className="animate-spin" /> : 'Start Community'}
                             </button>
                         </form>
@@ -395,34 +371,241 @@ export const CommunitiesSection = () => {
     );
 };
 
-export const MessageSection = () => (
-    <div className="flex h-[75vh] flex-col sm:row sm:flex-row">
-        <div className="w-full sm:w-80 border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-gray-800 p-4 space-y-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white px-2">Messages</h2>
-            <div className="text-center py-10 sm:py-20 text-gray-500 text-xs px-4">
-                <FiMessageSquare size={32} className="mx-auto mb-2 opacity-50" />
-                Real-time college messaging coming soon.
+export const MessageSection = () => {
+    const [chats, setChats] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const q = query(
+            collection(db, 'direct_messages'), 
+            where('participants', 'array-contains', user.uid),
+            orderBy('lastMessageAt', 'desc')
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setChats(data);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    return (
+        <div className="flex h-[75vh] flex-col sm:flex-row">
+            <div className="w-full sm:w-80 border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-gray-800 p-4 flex flex-col">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white px-2 mb-4">Direct Messages</h2>
+                <div className="flex-1 overflow-y-auto space-y-2">
+                    {loading ? (
+                        <div className="flex justify-center py-10"><FiLoader className="animate-spin text-purple-500" /></div>
+                    ) : chats.length === 0 ? (
+                        <div className="text-center py-10 text-gray-500 text-xs italic">No messages yet. Start a chat from a community or Random Chat!</div>
+                    ) : (
+                        chats.map(chat => (
+                            <div key={chat.id} className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/10 cursor-pointer transition-all border border-transparent hover:border-purple-100 dark:hover:border-purple-900/30">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/40 rounded-full flex items-center justify-center text-purple-600 font-bold text-sm">
+                                        {chat.partnerName?.[0] || 'U'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-bold text-sm text-gray-900 dark:text-white truncate">{chat.partnerName || 'Unknown User'}</p>
+                                        <p className="text-[10px] text-gray-500 truncate">{chat.lastMessage || 'Sent a message'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+            <div className="hidden sm:flex flex-1 flex-col items-center justify-center text-gray-500">
+                <FiMessageSquare size={48} className="mb-4 opacity-10" />
+                <p className="font-medium">Pick a student to start a chat</p>
             </div>
         </div>
-        <div className="hidden sm:flex flex-1 flex-col items-center justify-center text-gray-500">
-            <FiMessageSquare size={48} className="mb-4 opacity-10" />
-            <p className="font-medium">Pick a student to start a chat</p>
-        </div>
-    </div>
-);
+    );
+};
 
-export const RandomChatSection = () => (
-    <div className="p-8 flex flex-col items-center justify-center h-full text-center">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-3xl flex items-center justify-center mb-6 animate-pulse">
-            <FiHash size={36} />
+export const RandomChatSection = () => {
+    const [status, setStatus] = useState('idle'); // idle, searching, chatting
+    const [session, setSession] = useState(null);
+    const [messages, setMessages] = useState([]);
+    const [text, setText] = useState('');
+    const chatEndRef = useRef(null);
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    useEffect(() => {
+        if (status === 'chatting' && session) {
+            const q = query(collection(db, `random_sessions/${session.id}/messages`), orderBy('createdAt', 'asc'));
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                setMessages(snapshot.docs.map(doc => doc.data()));
+            });
+            return () => unsubscribe();
+        }
+    }, [status, session]);
+
+    const findMatch = async () => {
+        setStatus('searching');
+        const user = auth.currentUser;
+        if (!user) return;
+
+        try {
+            // Find waiting room
+            const q = query(collection(db, 'random_waiting'), limit(1));
+            const snap = await getDocs(q);
+
+            if (!snap.empty && snap.docs[0].id !== user.uid) {
+                const partner = snap.docs[0].data();
+                const sessionId = `${user.uid}_${partner.uid}`;
+                
+                // Create Session
+                const sessionRef = doc(db, 'random_sessions', sessionId);
+                await setDoc(sessionRef, {
+                    users: [user.uid, partner.uid],
+                    id: sessionId,
+                    createdAt: serverTimestamp()
+                });
+
+                // Delete waiting room entries
+                await deleteDoc(doc(db, 'random_waiting', partner.uid));
+                
+                setSession({ id: sessionId, partner: partner });
+                setStatus('chatting');
+            } else {
+                // Join waiting room
+                await setDoc(doc(db, 'random_waiting', user.uid), {
+                    uid: user.uid,
+                    joinedAt: serverTimestamp()
+                });
+
+                // Listen for session creation
+                const qSession = query(collection(db, 'random_sessions'), where('users', 'array-contains', user.uid), limit(1));
+                const unsub = onSnapshot(qSession, (snapS) => {
+                    if (!snapS.empty) {
+                        setSession(snapS.docs[0].data());
+                        setStatus('chatting');
+                        unsub();
+                    }
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            setStatus('idle');
+        }
+    };
+
+    const sendMessage = async (e) => {
+        e.preventDefault();
+        if (!text.trim() || !session) return;
+        const msg = text;
+        setText('');
+        await addDoc(collection(db, `random_sessions/${session.id}/messages`), {
+            text: msg,
+            uid: auth.currentUser.uid,
+            createdAt: serverTimestamp()
+        });
+    };
+
+    const skipChat = async () => {
+        if (session) {
+            // In a real app, you'd clean up messages too, but for simplicity:
+            await deleteDoc(doc(db, 'random_sessions', session.id));
+        }
+        setSession(null);
+        setMessages([]);
+        setStatus('idle');
+        findMatch(); // Auto-search next
+    };
+
+    if (status === 'chatting') {
+        return (
+            <div className="flex flex-col h-[75vh] bg-white dark:bg-gray-900 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+                    <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                        <h3 className="font-bold text-gray-900 dark:text-white text-sm">Talking to a Student</h3>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <button className="p-2 text-gray-500 hover:text-purple-600 transition-colors" title="Send Direct Message">
+                            <FiMail size={20} />
+                        </button>
+                        <button onClick={skipChat} className="flex items-center space-x-1 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl font-bold text-xs hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                            <FiSkipForward /> <span>SKIP</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+                    {messages.map((m, i) => (
+                        <div key={i} className={`flex ${m.uid === auth.currentUser.uid ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[75%] p-3 rounded-2xl text-sm font-medium shadow-sm ${m.uid === auth.currentUser.uid ? 'bg-purple-600 text-white rounded-tr-none' : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-tl-none'}`}>
+                                {m.text}
+                            </div>
+                        </div>
+                    ))}
+                    <div ref={chatEndRef} />
+                </div>
+
+                <form onSubmit={sendMessage} className="p-4 border-t border-gray-100 dark:border-gray-800 flex items-center space-x-2">
+                    <input 
+                        type="text" 
+                        className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-800 border-none rounded-2xl focus:ring-2 focus:ring-purple-500 text-sm font-medium transition-all"
+                        placeholder="Type a message..."
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                    />
+                    <button type="submit" className="p-3 bg-purple-600 text-white rounded-2xl shadow-lg shadow-purple-500/20 active:scale-95 transition-all">
+                        <FiSend size={20} />
+                    </button>
+                </form>
+            </div>
+        );
+    }
+
+    return (
+        <div className="p-8 flex flex-col items-center justify-center h-[70vh] text-center">
+            {status === 'searching' ? (
+                <>
+                    <div className="relative w-32 h-32 mb-8">
+                        <div className="absolute inset-0 border-4 border-purple-500 rounded-full animate-ping opacity-20"></div>
+                        <div className="absolute inset-4 border-4 border-purple-500 rounded-full animate-ping opacity-40"></div>
+                        <div className="absolute inset-0 flex items-center justify-center bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-full">
+                            <FiSearch size={48} className="animate-pulse" />
+                        </div>
+                    </div>
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2 italic tracking-tighter uppercase">Looking for someone...</h2>
+                    <p className="text-gray-500 text-sm font-medium">Sit tight! We are matching you with another engineering student.</p>
+                    <button onClick={() => setStatus('idle')} className="mt-8 text-red-500 font-bold uppercase text-[10px] tracking-widest hover:underline">Cancel Search</button>
+                </>
+            ) : (
+                <>
+                    <div className="w-24 h-24 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-[2rem] flex items-center justify-center mb-6 shadow-purple-200 dark:shadow-none shadow-xl border-4 border-white dark:border-gray-800">
+                        <FiHash size={40} />
+                    </div>
+                    <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-3 italic tracking-tight">RANDOM B-TECH CHAT</h2>
+                    <p className="text-gray-500 max-w-sm mb-10 text-sm font-medium leading-relaxed">Connect anonymously with engineering students across India. Safe, temporary, and fun.</p>
+                    <button 
+                        onClick={findMatch}
+                        className="group flex items-center space-x-3 px-10 py-5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-3xl font-black text-lg shadow-2xl shadow-purple-500/40 hover:scale-105 active:scale-95 transition-all"
+                    >
+                        <span>START CHATTING</span>
+                        <FiSkipForward className="group-hover:translate-x-1 transition-transform" />
+                    </button>
+                    <div className="mt-12 flex items-center space-x-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
+                        <span className="flex items-center"><FiShield className="mr-1 text-green-500" /> Anonymous</span>
+                        <span className="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>
+                        <span className="flex items-center"><FiX className="mr-1 text-red-500" /> Temporary</span>
+                    </div>
+                </>
+            )}
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 leading-tight">Connect with Random Students</h2>
-        <p className="text-gray-500 text-sm max-w-xs sm:max-w-md mb-8">Chat anonymously with anyone across all engineering colleges.</p>
-        <button className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold text-lg shadow-xl shadow-purple-500/30 hover:scale-105 active:scale-95 transition-all">
-            Find Someone Now
-        </button>
-    </div>
-);
+    );
+};
 
 export const ConfessionSection = () => {
     const [confessions, setConfessions] = useState([]);
