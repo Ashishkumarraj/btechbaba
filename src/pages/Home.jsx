@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Hero from '../components/Hero';
-import Features from '../components/Features';
-import PYQ from '../components/PYQ';
 import YoutubeVideos from '../components/YoutubeVideos';
 
 export default function Home() {
@@ -33,8 +31,6 @@ export default function Home() {
     return (
         <div className="page-enter">
             <Hero />
-            <Features />
-            <PYQ />
             <YoutubeVideos />
         </div>
     );
